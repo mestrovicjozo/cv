@@ -1,0 +1,9 @@
+/* TEAM */
+Developer: Jozo Meštrović
+Contact: jozomestrovic10@gmail.com
+GitHub: https://github.com/mestrovicjozo
+
+/* SITE */
+Last update: 2026-05-01
+Standards: HTML5, CSS3
+Components: anime.js

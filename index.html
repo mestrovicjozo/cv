@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your Name — Developer</title>
+<meta name="description" content="Selected projects." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js" defer></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <span class="topbar-cell">Jozo Meštrović</span>
+    <span class="topbar-cell">Developer</span>
+    <span class="topbar-cell"><a href="mailto:jozomestrovic10@gmail.com">jozomestrovic10@gmail.com</a></span>
+    <span class="topbar-cell topbar-cell--end">
+      <a
+        href="https://github.com/mestrovicjozo"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub profile"
+        class="icon-link"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.18 7.69 10.67.56.1.77-.24.77-.54 0-.27-.01-1.16-.02-2.1-3.13.68-3.79-1.34-3.79-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.98 0 0 .94-.3 3.09 1.16.9-.25 1.86-.37 2.82-.38.96.01 1.92.13 2.82.38 2.15-1.46 3.09-1.16 3.09-1.16.61 1.55.23 2.7.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.33-2.64 5.29-5.15 5.56.4.35.76 1.03.76 2.08 0 1.5-.01 2.71-.01 3.08 0 .3.2.65.78.54 4.47-1.49 7.68-5.7 7.68-10.67C23.25 5.48 18.27.5 12 .5z"/>
+        </svg>
+      </a>
+    </span>
+  </header>
+
+  <main class="stage">
+
+    <section class="projects" aria-labelledby="projects-heading">
+      <p id="projects-heading" class="eyebrow">Projects</p>
+      <ul class="project-list">
+        <li>
+          <a
+            href="https://actually-free-api.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="project"
+            data-project="actuallyfreeapi"
+            data-bg="#e6e4d6"
+          >
+            <span class="arrow" aria-hidden="true">→</span><span class="title">ActuallyFreeApi</span>
+          </a>
+        </li>
+        <li>
+          <a
+            href="#jarviz"
+            class="project"
+            data-project="jarviz"
+            data-bg="#d4e7f5"
+            data-pin
+            aria-haspopup="dialog"
+          >
+            <span class="arrow" aria-hidden="true">→</span><span class="title">Jarviz</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <aside class="previews">
+      <figure class="preview" data-preview="actuallyfreeapi" aria-hidden="true">
+        <img src="actuallyfreeapisoitfits.png" alt="ActuallyFreeApi landing page" class="preview-shot" />
+      </figure>
+
+      <figure class="preview preview--chat" data-preview="jarviz" id="jarviz" role="dialog" aria-label="Chat with Jarviz">
+        <div class="phone">
+          <span class="phone-notch" aria-hidden="true"></span>
+          <div class="phone-screen">
+            <header class="chat-head">
+              <span class="chat-status" aria-hidden="true"></span>
+              <span class="chat-title">Jarviz</span>
+              <button type="button" class="chat-clear" id="jarvizClear" aria-label="Clear conversation">Clear</button>
+            </header>
+
+            <div class="chat-intro">
+              <p>A tiny LLM living on my Android phone. Routed through a backend proxy to a Cloudflare Tunnel into Termux + llama.cpp.</p>
+              <details class="chat-details">
+                <summary>Technical details</summary>
+                <ul>
+                  <li>Model: <code>llama-3.2-3b-instruct.q4km.gguf</code></li>
+                  <li>Runtime: llama.cpp / llama-server</li>
+                  <li>Device: Android phone running Termux</li>
+                  <li>Tunnel: Cloudflare Tunnel</li>
+                  <li>API: OpenAI-compatible <code>/v1/chat/completions</code></li>
+                  <li>Key never touches the browser — proxied via Pages Function.</li>
+                </ul>
+              </details>
+            </div>
+
+            <div class="chat-log" id="jarvizLog" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+            <form class="chat-input" id="jarvizForm" autocomplete="off">
+              <input
+                type="text"
+                id="jarvizInput"
+                maxlength="1000"
+                placeholder="Ask Jarviz…"
+                aria-label="Message Jarviz"
+              />
+              <button type="submit" id="jarvizSend" aria-label="Send message" disabled>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                  <path fill="currentColor" d="M3.4 20.6 22 12 3.4 3.4 3.4 10l13 2-13 2z"/>
+                </svg>
+              </button>
+            </form>
+
+            <p class="chat-note">Runs on a real Android phone — replies may be slower than cloud AI.</p>
+          </div>
+        </div>
+      </figure>
+    </aside>
+
+  </main>
+
+<script>
+  window.addEventListener('load', () => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const projects = document.querySelectorAll('.project');
+    const previews = document.querySelectorAll('.preview');
+
+    let leaveTimer = null;
+    let pinned = null;
+
+    const findPreview = (key) =>
+      document.querySelector(`.preview[data-preview="${key}"]`);
+
+    const activate = (p) => {
+      if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+      if (p.dataset.bg) document.body.style.backgroundColor = p.dataset.bg;
+      previews.forEach(prev => prev.classList.toggle('is-active', prev.dataset.preview === p.dataset.project));
+      projects.forEach(q => q.classList.toggle('is-active', q === p));
+    };
+
+    const deactivate = () => {
+      document.body.style.backgroundColor = '';
+      previews.forEach(prev => prev.classList.remove('is-active'));
+      projects.forEach(q => q.classList.remove('is-active'));
+    };
+
+    const scheduleDeactivate = () => {
+      if (pinned) return;
+      if (leaveTimer) clearTimeout(leaveTimer);
+      leaveTimer = setTimeout(() => { if (!pinned) deactivate(); }, 350);
+    };
+
+    projects.forEach(p => {
+      p.addEventListener('mouseenter', () => activate(p));
+      p.addEventListener('mouseleave', () => { if (pinned !== p) scheduleDeactivate(); });
+      p.addEventListener('focus', () => activate(p));
+      p.addEventListener('blur', () => { if (pinned !== p) scheduleDeactivate(); });
+
+      if (p.dataset.pin !== undefined) {
+        p.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (pinned === p) {
+            pinned = null;
+            deactivate();
+          } else {
+            pinned = p;
+            activate(p);
+            const inp = findPreview(p.dataset.project)?.querySelector('input[type="text"]');
+            if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 120);
+          }
+        });
+      }
+    });
+
+    previews.forEach(prev => {
+      prev.addEventListener('mouseenter', () => {
+        if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+        const proj = document.querySelector(`.project[data-project="${prev.dataset.preview}"]`);
+        if (proj && proj.dataset.pin !== undefined) pinned = proj;
+      });
+      prev.addEventListener('mouseleave', () => { if (!pinned) scheduleDeactivate(); });
+      prev.addEventListener('focusin', () => {
+        if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+        const proj = document.querySelector(`.project[data-project="${prev.dataset.preview}"]`);
+        if (proj && proj.dataset.pin !== undefined) pinned = proj;
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!pinned) return;
+      if (pinned.contains(e.target)) return;
+      const activePrev = document.querySelector('.preview.is-active');
+      if (activePrev && activePrev.contains(e.target)) return;
+      pinned = null;
+      deactivate();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && pinned) { pinned = null; deactivate(); }
+    });
+
+    // Jarviz chat
+    const log = document.getElementById('jarvizLog');
+    const form = document.getElementById('jarvizForm');
+    const input = document.getElementById('jarvizInput');
+    const send = document.getElementById('jarvizSend');
+    const clearBtn = document.getElementById('jarvizClear');
+
+    const history = [];
+    let inFlight = false;
+
+    const updateSendState = () => {
+      if (!send || !input) return;
+      send.disabled = inFlight || input.value.trim().length === 0;
+    };
+
+    const appendMsg = (role, text) => {
+      const el = document.createElement('div');
+      el.className = `chat-msg chat-msg--${role}`;
+      el.textContent = text;
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      return el;
+    };
+
+    const setBusy = (busy) => {
+      inFlight = busy;
+      if (input) input.disabled = busy;
+      updateSendState();
+    };
+
+    if (input) {
+      input.addEventListener('input', updateSendState);
+      updateSendState();
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (inFlight) return;
+        const text = input.value.trim();
+        if (!text || text.length > 1000) return;
+        input.value = '';
+        appendMsg('user', text);
+        history.push({ role: 'user', content: text });
+        setBusy(true);
+
+        const pending = appendMsg('assistant', '');
+        pending.classList.add('chat-msg--pending');
+        pending.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+
+        try {
+          const res = await fetch('/api/phone-llm/chat', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ messages: history.slice(-8) })
+          });
+          const data = await res.json().catch(() => ({}));
+          pending.classList.remove('chat-msg--pending');
+          pending.innerHTML = '';
+          if (!res.ok) {
+            pending.classList.add('chat-msg--error');
+            pending.textContent = data.error || 'Something went wrong.';
+          } else {
+            pending.textContent = data.reply || '(empty reply)';
+            history.push({ role: 'assistant', content: data.reply || '' });
+          }
+        } catch (err) {
+          console.error('jarviz fetch failed:', err);
+          pending.classList.remove('chat-msg--pending');
+          pending.classList.add('chat-msg--error');
+          pending.innerHTML = '';
+          pending.textContent = "Couldn't reach the chat proxy. If you're testing locally, run `npx wrangler pages dev .` so the Pages Function is served.";
+        } finally {
+          setBusy(false);
+          input.focus({ preventScroll: true });
+        }
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        history.length = 0;
+        log.innerHTML = '';
+        input.focus({ preventScroll: true });
+      });
+    }
+
+    if (reduce || typeof anime === 'undefined') return;
+
+    anime({
+      targets: '.topbar-cell, .eyebrow, .project',
+      opacity: [0, 1],
+      translateY: [12, 0],
+      duration: 800,
+      delay: anime.stagger(80, { start: 100 }),
+      easing: 'easeOutQuart'
+    });
+  });
+</script>
+</body>
+</html>
