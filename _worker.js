@@ -1,5 +1,5 @@
-// Cloudflare Pages Function: secure proxy to a phone-hosted llama.cpp server.
-// Frontend posts { messages: [...] } here. The real API key never leaves the server.
+// Cloudflare Worker entry: serves static assets and proxies /api/phone-llm/chat
+// to a phone-hosted llama.cpp server. The real API key never leaves the server.
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
@@ -17,7 +17,6 @@ const SYSTEM_PROMPT =
   "information provided by the website or the current conversation. Do not output " +
   "JSON unless explicitly asked.";
 
-// Per-isolate rate buckets. Best-effort across the edge — tighten with KV/D1 if needed.
 const rateBuckets = new Map();
 
 function checkRateLimit(ip) {
@@ -47,7 +46,11 @@ function json(body, status = 200) {
   });
 }
 
-export const onRequestPost = async ({ request, env }) => {
+async function handleChat(request, env) {
+  if (request.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405, headers: { 'allow': 'POST' } });
+  }
+
   if (!env.PHONE_LLM_BASE_URL || !env.PHONE_LLM_API_KEY) {
     console.error('phone-llm: missing PHONE_LLM_BASE_URL or PHONE_LLM_API_KEY');
     return json({ error: 'The chat service is not configured yet.' }, 503);
@@ -145,7 +148,14 @@ export const onRequestPost = async ({ request, env }) => {
   }
 
   return json({ reply: reply.trim() });
-};
+}
 
-export const onRequest = () =>
-  new Response('Method not allowed', { status: 405, headers: { 'allow': 'POST' } });
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/phone-llm/chat') {
+      return handleChat(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  }
+};
