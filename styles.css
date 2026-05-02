@@ -51,6 +51,9 @@ a {
   padding: 24px 40px;
   font-size: 15px;
   z-index: 10;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 .topbar-cell {
   opacity: 0;
@@ -697,7 +700,8 @@ body.reader::before { display: none; }
     max-height: 0;
     display: flex;
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: center;
+    width: 100%;
   }
   .preview.is-active {
     opacity: 1;
