@@ -3,6 +3,10 @@ main = "_worker.js"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+PHONE_LLM_BASE_URL = "https://llm.jozobozo.org"
+PHONE_LLM_MODEL = "llama-3.2-3b-instruct.q4km.gguf"
+
 [assets]
 directory = "."
 binding = "ASSETS"
