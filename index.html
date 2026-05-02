@@ -170,26 +170,42 @@
       leaveTimer = setTimeout(() => { if (!pinned) deactivate(); }, 350);
     };
 
-    projects.forEach(p => {
-      p.addEventListener('mouseenter', () => activate(p));
-      p.addEventListener('mouseleave', () => { if (pinned !== p) scheduleDeactivate(); });
-      p.addEventListener('focus', () => activate(p));
-      p.addEventListener('blur', () => { if (pinned !== p) scheduleDeactivate(); });
+    const isMobile = () => window.matchMedia('(max-width: 900px)').matches;
 
-      if (p.dataset.pin !== undefined) {
-        p.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (pinned === p) {
+    projects.forEach(p => {
+      p.addEventListener('mouseenter', () => { if (!isMobile()) activate(p); });
+      p.addEventListener('mouseleave', () => { if (!isMobile() && pinned !== p) scheduleDeactivate(); });
+      p.addEventListener('focus', () => { if (!isMobile()) activate(p); });
+      p.addEventListener('blur', () => { if (!isMobile() && pinned !== p) scheduleDeactivate(); });
+
+      p.addEventListener('click', (e) => {
+        const isPinable = p.dataset.pin !== undefined;
+        const mobile = isMobile();
+
+        // Desktop, non-pin project: let the link navigate normally
+        if (!isPinable && !mobile) return;
+
+        if (pinned === p) {
+          // Tapping the already-open project
+          if (!isPinable && mobile) {
+            // Mobile + non-pin (AFA, Radar): collapse before allowing the link to navigate
             pinned = null;
             deactivate();
-          } else {
-            pinned = p;
-            activate(p);
-            const inp = findPreview(p.dataset.project)?.querySelector('input[type="text"]');
-            if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 120);
+            return;
           }
-        });
-      }
+          // Pinable (Jarviz) or desktop pin: collapse
+          e.preventDefault();
+          pinned = null;
+          deactivate();
+        } else {
+          // First tap, or switching to a different project
+          e.preventDefault();
+          pinned = p;
+          activate(p);
+          const inp = findPreview(p.dataset.project)?.querySelector('input[type="text"]');
+          if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 120);
+        }
+      });
     });
 
     previews.forEach(prev => {

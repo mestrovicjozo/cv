@@ -639,19 +639,25 @@ body.reader::before { display: none; }
     margin-top: 28px;
   }
 
-  /* Inline previews under each project name on mobile */
+  /* Previews collapse under each project on mobile, open on tap */
   .preview {
     position: static;
     transform: none;
-    opacity: 1;
-    pointer-events: auto;
-    transition: none;
-    margin: 16px 0 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, max-height .35s ease, margin .25s ease;
+    margin: 0;
+    overflow: hidden;
+    max-height: 0;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
   }
   .preview.is-active {
+    opacity: 1;
+    max-height: 720px;
+    pointer-events: auto;
+    margin: 16px 0 0;
     transform: none;
   }
   .preview--chat,
