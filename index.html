@@ -37,7 +37,7 @@
     <section class="projects" aria-labelledby="projects-heading">
       <p id="projects-heading" class="eyebrow">Projects</p>
       <ul class="project-list">
-        <li>
+        <li class="project-item">
           <a
             href="https://actually-free-api.vercel.app"
             target="_blank"
@@ -48,8 +48,11 @@
           >
             <span class="arrow" aria-hidden="true">→</span><span class="title">ActuallyFreeApi</span>
           </a>
+          <figure class="preview" data-preview="actuallyfreeapi" aria-hidden="true">
+            <img src="actuallyfreeapisoitfits.png" alt="ActuallyFreeApi landing page" class="preview-shot" />
+          </figure>
         </li>
-        <li>
+        <li class="project-item">
           <a
             href="#jarviz"
             class="project"
@@ -60,62 +63,79 @@
           >
             <span class="arrow" aria-hidden="true">→</span><span class="title">Jarviz</span>
           </a>
+          <figure class="preview preview--chat" data-preview="jarviz" id="jarviz" role="dialog" aria-label="Chat with Jarviz">
+            <div class="phone">
+              <span class="phone-notch" aria-hidden="true"></span>
+              <div class="phone-screen">
+                <header class="chat-head">
+                  <span class="chat-status" aria-hidden="true"></span>
+                  <span class="chat-title">Jarviz</span>
+                  <button type="button" class="chat-clear" id="jarvizClear" aria-label="Clear conversation">Clear</button>
+                </header>
+
+                <div class="chat-intro">
+                  <p>A tiny LLM living on my Android phone. Routed through a backend proxy to a Cloudflare Tunnel into Termux + llama.cpp.</p>
+                  <details class="chat-details">
+                    <summary>Technical details</summary>
+                    <ul>
+                      <li>Model: <code>llama-3.2-3b-instruct.q4km.gguf</code></li>
+                      <li>Runtime: llama.cpp / llama-server</li>
+                      <li>Device: Android phone running Termux</li>
+                      <li>Tunnel: Cloudflare Tunnel</li>
+                      <li>API: OpenAI-compatible <code>/v1/chat/completions</code></li>
+                      <li>Key never touches the browser — proxied via Pages Function.</li>
+                    </ul>
+                  </details>
+                </div>
+
+                <div class="chat-log" id="jarvizLog" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+                <form class="chat-input" id="jarvizForm" autocomplete="off">
+                  <input
+                    type="text"
+                    id="jarvizInput"
+                    maxlength="1000"
+                    placeholder="Ask Jarviz…"
+                    aria-label="Message Jarviz"
+                  />
+                  <button type="submit" id="jarvizSend" aria-label="Send message" disabled>
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="M3.4 20.6 22 12 3.4 3.4 3.4 10l13 2-13 2z"/>
+                    </svg>
+                  </button>
+                </form>
+
+                <p class="chat-note">Runs on a real Android phone — replies may be slower than cloud AI.</p>
+              </div>
+            </div>
+          </figure>
+        </li>
+        <li class="project-item">
+          <a
+            href="/radar"
+            class="project"
+            data-project="radar"
+            data-bg="#d8e7d6"
+          >
+            <span class="arrow" aria-hidden="true">→</span><span class="title">DailyAIRadar</span>
+          </a>
+          <figure class="preview preview--card" data-preview="radar" aria-hidden="true">
+            <div class="news-card">
+              <div class="news-card__masthead">
+                <span class="news-card__edition">Daily AI Radar</span>
+              </div>
+              <h3 class="news-card__title">Today in AI</h3>
+              <ul class="news-card__sections">
+                <li>General AI</li>
+                <li>LLMs</li>
+                <li>AI Tools</li>
+              </ul>
+              <p class="news-card__hint">Open ↗</p>
+            </div>
+          </figure>
         </li>
       </ul>
     </section>
-
-    <aside class="previews">
-      <figure class="preview" data-preview="actuallyfreeapi" aria-hidden="true">
-        <img src="actuallyfreeapisoitfits.png" alt="ActuallyFreeApi landing page" class="preview-shot" />
-      </figure>
-
-      <figure class="preview preview--chat" data-preview="jarviz" id="jarviz" role="dialog" aria-label="Chat with Jarviz">
-        <div class="phone">
-          <span class="phone-notch" aria-hidden="true"></span>
-          <div class="phone-screen">
-            <header class="chat-head">
-              <span class="chat-status" aria-hidden="true"></span>
-              <span class="chat-title">Jarviz</span>
-              <button type="button" class="chat-clear" id="jarvizClear" aria-label="Clear conversation">Clear</button>
-            </header>
-
-            <div class="chat-intro">
-              <p>A tiny LLM living on my Android phone. Routed through a backend proxy to a Cloudflare Tunnel into Termux + llama.cpp.</p>
-              <details class="chat-details">
-                <summary>Technical details</summary>
-                <ul>
-                  <li>Model: <code>llama-3.2-3b-instruct.q4km.gguf</code></li>
-                  <li>Runtime: llama.cpp / llama-server</li>
-                  <li>Device: Android phone running Termux</li>
-                  <li>Tunnel: Cloudflare Tunnel</li>
-                  <li>API: OpenAI-compatible <code>/v1/chat/completions</code></li>
-                  <li>Key never touches the browser — proxied via Pages Function.</li>
-                </ul>
-              </details>
-            </div>
-
-            <div class="chat-log" id="jarvizLog" role="log" aria-live="polite" aria-label="Conversation"></div>
-
-            <form class="chat-input" id="jarvizForm" autocomplete="off">
-              <input
-                type="text"
-                id="jarvizInput"
-                maxlength="1000"
-                placeholder="Ask Jarviz…"
-                aria-label="Message Jarviz"
-              />
-              <button type="submit" id="jarvizSend" aria-label="Send message" disabled>
-                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-                  <path fill="currentColor" d="M3.4 20.6 22 12 3.4 3.4 3.4 10l13 2-13 2z"/>
-                </svg>
-              </button>
-            </form>
-
-            <p class="chat-note">Runs on a real Android phone — replies may be slower than cloud AI.</p>
-          </div>
-        </div>
-      </figure>
-    </aside>
 
   </main>
 

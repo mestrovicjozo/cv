@@ -36,6 +36,88 @@ function checkRateLimit(ip) {
   return true;
 }
 
+const RADAR_REPO = 'mestrovicjozo/daily-ai-radar';
+const RADAR_CACHE_TTL = 600; // 10 min
+
+async function radarList() {
+  const cache = caches.default;
+  const cacheKey = new Request('https://radar.cache/list');
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  let res;
+  try {
+    res = await fetch(
+      `https://api.github.com/repos/${RADAR_REPO}/contents/digests`,
+      {
+        headers: {
+          'user-agent': 'jozobozo.org-cv/1.0',
+          'accept': 'application/vnd.github+json'
+        }
+      }
+    );
+  } catch (err) {
+    console.error('radar list fetch failed', err);
+    return json({ error: 'Could not load issue list.' }, 502);
+  }
+  if (!res.ok) {
+    console.error('radar list non-ok', res.status);
+    return json({ error: 'Could not load issue list.' }, 502);
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    return json({ error: 'Could not parse issue list.' }, 502);
+  }
+
+  const dates = (Array.isArray(data) ? data : [])
+    .filter(f => f && typeof f.name === 'string' && /^\d{4}-\d{2}-\d{2}\.md$/.test(f.name))
+    .map(f => f.name.replace(/\.md$/, ''))
+    .sort()
+    .reverse();
+
+  const response = json({ dates });
+  response.headers.set('cache-control', `public, max-age=${RADAR_CACHE_TTL}`);
+  await cache.put(cacheKey, response.clone());
+  return response;
+}
+
+async function radarDigest(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return json({ error: 'Invalid date.' }, 400);
+  }
+  const cache = caches.default;
+  const cacheKey = new Request(`https://radar.cache/digest/${date}`);
+  const cached = await cache.match(cacheKey);
+  if (cached) return cached;
+
+  let res;
+  try {
+    res = await fetch(
+      `https://raw.githubusercontent.com/${RADAR_REPO}/main/digests/${date}.md`,
+      { headers: { 'user-agent': 'jozobozo.org-cv/1.0' } }
+    );
+  } catch (err) {
+    console.error('radar digest fetch failed', err);
+    return json({ error: 'Could not load issue.' }, 502);
+  }
+  if (res.status === 404) {
+    return json({ error: 'No issue for that date.' }, 404);
+  }
+  if (!res.ok) {
+    console.error('radar digest non-ok', res.status);
+    return json({ error: 'Could not load issue.' }, 502);
+  }
+
+  const content = await res.text();
+  const response = json({ date, content });
+  response.headers.set('cache-control', `public, max-age=${RADAR_CACHE_TTL}`);
+  await cache.put(cacheKey, response.clone());
+  return response;
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -156,15 +238,12 @@ export default {
     if (url.pathname === '/api/phone-llm/chat') {
       return handleChat(request, env);
     }
-    if (url.pathname === '/api/phone-llm/debug') {
-      return json({
-        hasBaseUrl: !!env.PHONE_LLM_BASE_URL,
-        baseUrlLen: env.PHONE_LLM_BASE_URL ? env.PHONE_LLM_BASE_URL.length : 0,
-        hasApiKey: !!env.PHONE_LLM_API_KEY,
-        apiKeyLen: env.PHONE_LLM_API_KEY ? env.PHONE_LLM_API_KEY.length : 0,
-        hasModel: !!env.PHONE_LLM_MODEL,
-        envKeys: Object.keys(env).sort()
-      });
+    if (url.pathname === '/api/radar/list') {
+      return radarList();
+    }
+    const digestMatch = url.pathname.match(/^\/api\/radar\/digest\/([^/]+)$/);
+    if (digestMatch) {
+      return radarDigest(decodeURIComponent(digestMatch[1]));
     }
     return env.ASSETS.fetch(request);
   }

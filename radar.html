@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily AI Radar — Jozo Meštrović</title>
+<meta name="description" content="A daily AI news digest, generated automatically." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="reader">
+
+  <header class="topbar">
+    <span class="topbar-cell"><a href="/" aria-label="Back to home">← Jozo Meštrović</a></span>
+    <span class="topbar-cell">Daily AI Radar</span>
+    <span class="topbar-cell">
+      <a href="https://github.com/mestrovicjozo/daily-ai-radar" target="_blank" rel="noopener noreferrer">Source</a>
+    </span>
+    <span class="topbar-cell topbar-cell--end">
+      <a
+        href="https://github.com/mestrovicjozo"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub profile"
+        class="icon-link"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.18 7.69 10.67.56.1.77-.24.77-.54 0-.27-.01-1.16-.02-2.1-3.13.68-3.79-1.34-3.79-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.98 0 0 .94-.3 3.09 1.16.9-.25 1.86-.37 2.82-.38.96.01 1.92.13 2.82.38 2.15-1.46 3.09-1.16 3.09-1.16.61 1.55.23 2.7.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.33-2.64 5.29-5.15 5.56.4.35.76 1.03.76 2.08 0 1.5-.01 2.71-.01 3.08 0 .3.2.65.78.54 4.47-1.49 7.68-5.7 7.68-10.67C23.25 5.48 18.27.5 12 .5z"/>
+        </svg>
+      </a>
+    </span>
+  </header>
+
+  <main class="reader-main">
+    <aside class="reader-archive" aria-label="Archive">
+      <p class="reader-archive__title">Issues</p>
+      <ul id="archiveList" class="reader-archive__list"></ul>
+    </aside>
+    <article class="reader-article" id="article">
+      <p class="reader-loading">Loading latest issue…</p>
+    </article>
+  </main>
+
+<script>
+(() => {
+  const articleEl = document.getElementById('article');
+  const archiveEl = document.getElementById('archiveList');
+
+  const escapeHtml = (s) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const renderInline = (s) => {
+    let out = escapeHtml(s);
+    out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, t, u) =>
+      `<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer">${t}</a>`);
+    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    return out;
+  };
+
+  const renderMd = (md) => {
+    const lines = md.replace(/\r/g, '').split('\n');
+    const blocks = [];
+    let buf = [];
+    for (const line of lines) {
+      if (line.trim() === '') {
+        if (buf.length) { blocks.push(buf.join('\n')); buf = []; }
+      } else {
+        buf.push(line);
+      }
+    }
+    if (buf.length) blocks.push(buf.join('\n'));
+
+    const out = [];
+    for (const b of blocks) {
+      if (b.startsWith('# ')) out.push(`<h1>${renderInline(b.slice(2))}</h1>`);
+      else if (b.startsWith('## ')) out.push(`<h2>${renderInline(b.slice(3))}</h2>`);
+      else if (b.startsWith('### ')) out.push(`<h3>${renderInline(b.slice(4))}</h3>`);
+      else if (b.trim() === '---') out.push('<hr />');
+      else if (!b.includes('\n') && b.startsWith('_') && b.endsWith('_'))
+        out.push(`<p class="note"><em>${escapeHtml(b.slice(1, -1))}</em></p>`);
+      else out.push(`<p>${b.split('\n').map(renderInline).join('<br />')}</p>`);
+    }
+    return out.join('\n');
+  };
+
+  const fmtDate = (d) => {
+    try {
+      const dt = new Date(d + 'T00:00:00Z');
+      return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch { return d; }
+  };
+
+  const setCurrent = (date) => {
+    document.querySelectorAll('.reader-archive__list a').forEach((a) =>
+      a.classList.toggle('is-current', a.dataset.date === date));
+  };
+
+  const loadDigest = async (date) => {
+    articleEl.innerHTML = '<p class="reader-loading">Loading…</p>';
+    try {
+      const res = await fetch(`/api/radar/digest/${encodeURIComponent(date)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      articleEl.innerHTML = renderMd(data.content || '');
+      setCurrent(date);
+      const newUrl = `/radar?date=${date}`;
+      if (location.pathname + location.search !== newUrl) {
+        history.replaceState(null, '', newUrl);
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch (err) {
+      articleEl.innerHTML = `<p class="reader-error">${escapeHtml(err.message || 'Failed to load issue.')}</p>`;
+    }
+  };
+
+  (async () => {
+    try {
+      const res = await fetch('/api/radar/list');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+      const dates = Array.isArray(data.dates) ? data.dates : [];
+      if (dates.length === 0) {
+        articleEl.innerHTML = '<p class="reader-error">No issues yet — check back tomorrow.</p>';
+        return;
+      }
+
+      archiveEl.innerHTML = dates.map((d) =>
+        `<li><a href="?date=${d}" data-date="${d}">${escapeHtml(fmtDate(d))}</a></li>`).join('');
+
+      archiveEl.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-date]');
+        if (!a) return;
+        e.preventDefault();
+        loadDigest(a.dataset.date);
+      });
+
+      const params = new URLSearchParams(location.search);
+      const requested = params.get('date');
+      const initial = requested && dates.includes(requested) ? requested : dates[0];
+      loadDigest(initial);
+    } catch (err) {
+      articleEl.innerHTML = `<p class="reader-error">Could not load issues: ${escapeHtml(err.message || 'unknown error')}</p>`;
+    }
+  })();
+})();
+</script>
+</body>
+</html>
