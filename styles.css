@@ -54,6 +54,7 @@ a {
   background: rgba(255,255,255,0.72);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: background-color .5s cubic-bezier(.2,.7,.2,1);
 }
 .topbar-cell {
   opacity: 0;

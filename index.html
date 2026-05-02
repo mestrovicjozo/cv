@@ -164,15 +164,29 @@
     const findPreview = (key) =>
       document.querySelector(`.preview[data-preview="${key}"]`);
 
+    const topbar = document.querySelector('.topbar');
+    const setTopbarBg = (hex) => {
+      if (!topbar) return;
+      if (!hex) { topbar.style.backgroundColor = ''; return; }
+      const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+      if (!m) return;
+      topbar.style.backgroundColor =
+        `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},0.72)`;
+    };
+
     const activate = (p) => {
       if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
-      if (p.dataset.bg) document.body.style.backgroundColor = p.dataset.bg;
+      if (p.dataset.bg) {
+        document.body.style.backgroundColor = p.dataset.bg;
+        setTopbarBg(p.dataset.bg);
+      }
       previews.forEach(prev => prev.classList.toggle('is-active', prev.dataset.preview === p.dataset.project));
       projects.forEach(q => q.classList.toggle('is-active', q === p));
     };
 
     const deactivate = () => {
       document.body.style.backgroundColor = '';
+      setTopbarBg('');
       previews.forEach(prev => prev.classList.remove('is-active'));
       projects.forEach(q => q.classList.remove('is-active'));
     };
