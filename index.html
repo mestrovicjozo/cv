@@ -49,7 +49,15 @@
             <span class="arrow" aria-hidden="true">→</span><span class="title">ActuallyFreeApi</span>
           </a>
           <figure class="preview" data-preview="actuallyfreeapi" aria-hidden="true">
-            <img src="actuallyfreeapisoitfits.png" alt="ActuallyFreeApi landing page" class="preview-shot" />
+            <a
+              href="https://actually-free-api.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="preview-link"
+              aria-label="Open ActuallyFreeApi"
+            >
+              <img src="actuallyfreeapisoitfits.png" alt="ActuallyFreeApi landing page" class="preview-shot" />
+            </a>
           </figure>
         </li>
         <li class="project-item">
@@ -120,18 +128,20 @@
             <span class="arrow" aria-hidden="true">→</span><span class="title">DailyAIRadar</span>
           </a>
           <figure class="preview preview--card" data-preview="radar" aria-hidden="true">
-            <div class="news-card">
-              <div class="news-card__masthead">
-                <span class="news-card__edition">Daily AI Radar</span>
+            <a href="/radar" class="preview-link" aria-label="Open Daily AI Radar">
+              <div class="news-card">
+                <div class="news-card__masthead">
+                  <span class="news-card__edition">Daily AI Radar</span>
+                </div>
+                <h3 class="news-card__title">Today in AI</h3>
+                <ul class="news-card__sections">
+                  <li>General AI</li>
+                  <li>LLMs</li>
+                  <li>AI Tools</li>
+                </ul>
+                <p class="news-card__hint">Open ↗</p>
               </div>
-              <h3 class="news-card__title">Today in AI</h3>
-              <ul class="news-card__sections">
-                <li>General AI</li>
-                <li>LLMs</li>
-                <li>AI Tools</li>
-              </ul>
-              <p class="news-card__hint">Open ↗</p>
-            </div>
+            </a>
           </figure>
         </li>
       </ul>
@@ -185,21 +195,12 @@
         // Desktop, non-pin project: let the link navigate normally
         if (!isPinable && !mobile) return;
 
+        // Mobile (any project) or desktop pin: tap toggles preview, never navigates
+        e.preventDefault();
         if (pinned === p) {
-          // Tapping the already-open project
-          if (!isPinable && mobile) {
-            // Mobile + non-pin (AFA, Radar): collapse before allowing the link to navigate
-            pinned = null;
-            deactivate();
-            return;
-          }
-          // Pinable (Jarviz) or desktop pin: collapse
-          e.preventDefault();
           pinned = null;
           deactivate();
         } else {
-          // First tap, or switching to a different project
-          e.preventDefault();
           pinned = p;
           activate(p);
           const inp = findPreview(p.dataset.project)?.querySelector('input[type="text"]');

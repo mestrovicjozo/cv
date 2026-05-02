@@ -169,6 +169,16 @@ a {
   pointer-events: auto;
 }
 
+.preview-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 14px;
+  transition: transform .2s ease;
+}
+.preview-link:hover { transform: translateY(-2px); }
+.preview-link:active { transform: translateY(0); }
+
 .preview-shot {
   display: block;
   width: clamp(320px, 28vw, 440px);
