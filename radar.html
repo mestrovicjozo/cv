@@ -7,142 +7,247 @@
 <meta name="description" content="A daily AI news digest, generated automatically." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="reader">
+<body class="reader news">
 
-  <header class="topbar">
-    <span class="topbar-cell"><a href="/" aria-label="Back to home">← Jozo Meštrović</a></span>
-    <span class="topbar-cell">Daily AI Radar</span>
-    <span class="topbar-cell">
-      <a href="https://github.com/mestrovicjozo/daily-ai-radar" target="_blank" rel="noopener noreferrer">Source</a>
-    </span>
-    <span class="topbar-cell topbar-cell--end">
+  <header class="news-topbar">
+    <a class="news-back" href="/" aria-label="Back to home">← Jozo Meštrović</a>
+    <h1 class="news-title">Daily AI Radar</h1>
+    <div class="news-controls">
+      <label class="news-date" aria-label="Pick a date">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+          <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+            d="M3 7h18M3 7v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V7M3 7l1-3h16l1 3M8 3v4M16 3v4"/>
+        </svg>
+        <input type="date" id="dateInput" />
+      </label>
       <a
-        href="https://github.com/mestrovicjozo"
+        class="news-source-link"
+        href="https://github.com/mestrovicjozo/daily-ai-radar"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="GitHub profile"
-        class="icon-link"
-      >
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-          <path fill="currentColor" d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.18 7.69 10.67.56.1.77-.24.77-.54 0-.27-.01-1.16-.02-2.1-3.13.68-3.79-1.34-3.79-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.98 0 0 .94-.3 3.09 1.16.9-.25 1.86-.37 2.82-.38.96.01 1.92.13 2.82.38 2.15-1.46 3.09-1.16 3.09-1.16.61 1.55.23 2.7.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.33-2.64 5.29-5.15 5.56.4.35.76 1.03.76 2.08 0 1.5-.01 2.71-.01 3.08 0 .3.2.65.78.54 4.47-1.49 7.68-5.7 7.68-10.67C23.25 5.48 18.27.5 12 .5z"/>
-        </svg>
-      </a>
-    </span>
+      >Source</a>
+    </div>
   </header>
 
-  <main class="reader-main">
-    <aside class="reader-archive" aria-label="Archive">
-      <p class="reader-archive__title">Issues</p>
-      <ul id="archiveList" class="reader-archive__list"></ul>
-    </aside>
-    <article class="reader-article" id="article">
-      <p class="reader-loading">Loading latest issue…</p>
-    </article>
+  <nav class="news-tabs" id="newsTabs" aria-label="Categories">
+    <button type="button" class="news-tab is-active" data-cat="all">Latest</button>
+    <button type="button" class="news-tab" data-cat="General AI">General AI</button>
+    <button type="button" class="news-tab" data-cat="LLMs">LLMs</button>
+    <button type="button" class="news-tab" data-cat="AI Tools">AI Tools</button>
+  </nav>
+
+  <main class="news-main" id="newsMain">
+    <p class="news-status" id="newsStatus">Loading latest issue…</p>
   </main>
 
 <script>
 (() => {
-  const articleEl = document.getElementById('article');
-  const archiveEl = document.getElementById('archiveList');
+  const dateInput = document.getElementById('dateInput');
+  const tabsEl = document.getElementById('newsTabs');
+  const mainEl = document.getElementById('newsMain');
+  const statusEl = document.getElementById('newsStatus');
+
+  let allDates = [];
+  let currentDate = null;
+  let currentArticles = [];
+  let currentIntro = '';
+  let currentCategory = 'all';
 
   const escapeHtml = (s) =>
     s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  const renderInline = (s) => {
-    let out = escapeHtml(s);
-    out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, t, u) =>
-      `<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer">${t}</a>`);
-    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    return out;
+  const fmtDate = (d) => {
+    try {
+      return new Date(d + 'T00:00:00Z').toLocaleDateString(undefined,
+        { month: 'long', day: 'numeric', year: 'numeric' });
+    } catch { return d; }
   };
 
-  const renderMd = (md) => {
+  // Parse the daily-ai-radar markdown into structured articles
+  const parseDigest = (md) => {
+    const result = { title: '', intro: '', articles: [] };
     const lines = md.replace(/\r/g, '').split('\n');
     const blocks = [];
     let buf = [];
     for (const line of lines) {
       if (line.trim() === '') {
         if (buf.length) { blocks.push(buf.join('\n')); buf = []; }
-      } else {
-        buf.push(line);
-      }
+      } else { buf.push(line); }
     }
     if (buf.length) blocks.push(buf.join('\n'));
 
-    const out = [];
-    for (const b of blocks) {
-      if (b.startsWith('# ')) out.push(`<h1>${renderInline(b.slice(2))}</h1>`);
-      else if (b.startsWith('## ')) out.push(`<h2>${renderInline(b.slice(3))}</h2>`);
-      else if (b.startsWith('### ')) out.push(`<h3>${renderInline(b.slice(4))}</h3>`);
-      else if (b.trim() === '---') out.push('<hr />');
-      else if (!b.includes('\n') && b.startsWith('_') && b.endsWith('_'))
-        out.push(`<p class="note"><em>${escapeHtml(b.slice(1, -1))}</em></p>`);
-      else out.push(`<p>${b.split('\n').map(renderInline).join('<br />')}</p>`);
+    let currentSection = null;
+    let currentArticle = null;
+    let sawSection = false;
+
+    for (const block of blocks) {
+      if (block.startsWith('# ')) {
+        result.title = block.slice(2).trim();
+      } else if (block.startsWith('## ')) {
+        currentSection = block.slice(3).trim();
+        currentArticle = null;
+        sawSection = true;
+      } else if (block.startsWith('### ')) {
+        const text = block.slice(4).trim();
+        const m = text.match(/^([^:]+):\s*\[([^\]]+)\]\(([^)]+)\)/);
+        if (m) {
+          currentArticle = {
+            section: currentSection || 'Top Stories',
+            category: m[1].trim(),
+            title: m[2].trim(),
+            url: m[3].trim(),
+            source: '',
+            summary: '',
+            whyItMatters: ''
+          };
+          result.articles.push(currentArticle);
+        }
+      } else if (block.startsWith('**Source:**')) {
+        if (currentArticle) currentArticle.source = block.replace(/^\*\*Source:\*\*\s*/, '').trim();
+      } else if (block.startsWith('**Why it matters:**')) {
+        if (currentArticle) currentArticle.whyItMatters = block.replace(/^\*\*Why it matters:\*\*\s*/, '').trim();
+      } else if (block.trim() === '---' || /^_.*_$/.test(block.trim())) {
+        // separator or trailing italic — skip
+      } else if (currentArticle) {
+        currentArticle.summary += (currentArticle.summary ? '\n\n' : '') + block;
+      } else if (!sawSection) {
+        result.intro += (result.intro ? '\n\n' : '') + block;
+      }
     }
-    return out.join('\n');
+    return result;
   };
 
-  const fmtDate = (d) => {
-    try {
-      const dt = new Date(d + 'T00:00:00Z');
-      return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch { return d; }
+  const renderCard = (art) => {
+    const safeTitle = escapeHtml(art.title);
+    const safeUrl = escapeHtml(art.url);
+    const safeCat = escapeHtml(art.category);
+    const safeSrc = escapeHtml(art.source);
+    const safeSummary = escapeHtml(art.summary).replace(/\n+/g, '<br />');
+    const safeWhy = escapeHtml(art.whyItMatters);
+    return `
+      <article class="news-card">
+        <p class="news-card__cat">${safeCat}</p>
+        <h3 class="news-card__title">
+          <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>
+        </h3>
+        ${safeSrc ? `<p class="news-card__source">${safeSrc}</p>` : ''}
+        ${art.summary ? `<p class="news-card__summary">${safeSummary}</p>` : ''}
+        ${safeWhy ? `<p class="news-card__why"><strong>Why it matters:</strong> ${safeWhy}</p>` : ''}
+      </article>
+    `;
   };
 
-  const setCurrent = (date) => {
-    document.querySelectorAll('.reader-archive__list a').forEach((a) =>
-      a.classList.toggle('is-current', a.dataset.date === date));
+  const renderArticles = () => {
+    if (!currentArticles.length) {
+      mainEl.innerHTML = '<p class="news-status">No articles for this date.</p>';
+      return;
+    }
+
+    const filtered = currentCategory === 'all'
+      ? currentArticles
+      : currentArticles.filter(a => a.category === currentCategory);
+
+    const sections = ['Top Stories', 'Honorable Mentions'];
+    const html = [];
+
+    if (currentIntro && currentCategory === 'all') {
+      html.push(`<p class="news-intro">${escapeHtml(currentIntro)}</p>`);
+    }
+
+    let renderedAny = false;
+    for (const sec of sections) {
+      const items = filtered.filter(a => a.section === sec);
+      if (!items.length) continue;
+      renderedAny = true;
+      html.push(`
+        <section class="news-section">
+          <h2 class="news-section__title">${escapeHtml(sec)}</h2>
+          <div class="news-grid news-grid--${sec === 'Top Stories' ? 'top' : 'honorable'}">
+            ${items.map(renderCard).join('')}
+          </div>
+        </section>
+      `);
+    }
+
+    if (!renderedAny) {
+      html.push(`<p class="news-status">No ${escapeHtml(currentCategory)} articles in this issue.</p>`);
+    }
+
+    mainEl.innerHTML = html.join('');
   };
 
   const loadDigest = async (date) => {
-    articleEl.innerHTML = '<p class="reader-loading">Loading…</p>';
+    mainEl.innerHTML = '<p class="news-status">Loading…</p>';
     try {
       const res = await fetch(`/api/radar/digest/${encodeURIComponent(date)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      articleEl.innerHTML = renderMd(data.content || '');
-      setCurrent(date);
+
+      const parsed = parseDigest(data.content || '');
+      currentDate = date;
+      currentArticles = parsed.articles;
+      currentIntro = parsed.intro;
+
+      if (dateInput.value !== date) dateInput.value = date;
+
       const newUrl = `/radar?date=${date}`;
       if (location.pathname + location.search !== newUrl) {
         history.replaceState(null, '', newUrl);
       }
+
+      renderArticles();
       window.scrollTo({ top: 0, behavior: 'instant' });
     } catch (err) {
-      articleEl.innerHTML = `<p class="reader-error">${escapeHtml(err.message || 'Failed to load issue.')}</p>`;
+      mainEl.innerHTML = `<p class="news-status news-status--error">${escapeHtml(err.message || 'Failed to load issue.')}</p>`;
     }
   };
 
+  // Tab clicks → filter category
+  tabsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.news-tab');
+    if (!btn) return;
+    currentCategory = btn.dataset.cat;
+    tabsEl.querySelectorAll('.news-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+    renderArticles();
+  });
+
+  // Date input → load that day
+  dateInput.addEventListener('change', () => {
+    const v = dateInput.value;
+    if (!v) return;
+    if (v === currentDate) return;
+    loadDigest(v);
+  });
+
+  // Boot: fetch list, set min/max + default to latest
   (async () => {
     try {
       const res = await fetch('/api/radar/list');
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
 
-      const dates = Array.isArray(data.dates) ? data.dates : [];
-      if (dates.length === 0) {
-        articleEl.innerHTML = '<p class="reader-error">No issues yet — check back tomorrow.</p>';
+      allDates = Array.isArray(data.dates) ? data.dates : [];
+      if (!allDates.length) {
+        mainEl.innerHTML = '<p class="news-status">No issues yet — check back tomorrow.</p>';
         return;
       }
 
-      archiveEl.innerHTML = dates.map((d) =>
-        `<li><a href="?date=${d}" data-date="${d}">${escapeHtml(fmtDate(d))}</a></li>`).join('');
-
-      archiveEl.addEventListener('click', (e) => {
-        const a = e.target.closest('a[data-date]');
-        if (!a) return;
-        e.preventDefault();
-        loadDigest(a.dataset.date);
-      });
+      // Sorted descending; first is most recent.
+      const minDate = allDates[allDates.length - 1];
+      const maxDate = allDates[0];
+      dateInput.min = minDate;
+      dateInput.max = maxDate;
 
       const params = new URLSearchParams(location.search);
       const requested = params.get('date');
-      const initial = requested && dates.includes(requested) ? requested : dates[0];
+      const initial = requested && allDates.includes(requested) ? requested : maxDate;
+      dateInput.value = initial;
       loadDigest(initial);
     } catch (err) {
-      articleEl.innerHTML = `<p class="reader-error">Could not load issues: ${escapeHtml(err.message || 'unknown error')}</p>`;
+      mainEl.innerHTML = `<p class="news-status news-status--error">Could not load issues: ${escapeHtml(err.message || 'unknown error')}</p>`;
     }
   })();
 })();
