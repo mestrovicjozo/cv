@@ -16,7 +16,12 @@ const SYSTEM_PROMPT =
   "Do not pretend to be a large cloud model. If asked about Jozo, only mention " +
   "information provided by the website or the current conversation. Do not output " +
   "JSON unless explicitly asked. " +
-  "Always reply in English, no matter what language the user writes in.";
+  "Language rule: always write your reply in English. If the user's message is just " +
+  "a short greeting in any language (e.g. 'hi', 'hello', 'hola', 'bonjour', 'ciao', " +
+  "'ćao', 'bok', 'hallo', 'salut', 'konnichiwa'), reply with a normal friendly " +
+  "English greeting. If the user writes a longer message in any language other than " +
+  "English, do not try to answer it — instead reply in English with exactly: " +
+  "\"I only respond in English. Please rewrite your message in English.\"";
 
 const rateBuckets = new Map();
 
