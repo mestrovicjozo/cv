@@ -1,0 +1,10 @@
+_worker.js
+wrangler.toml
+.assetsignore
+.dev.vars
+.env
+.env.*
+.gitignore
+.git/
+node_modules/
+README.md
