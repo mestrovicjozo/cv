@@ -156,6 +156,16 @@ export default {
     if (url.pathname === '/api/phone-llm/chat') {
       return handleChat(request, env);
     }
+    if (url.pathname === '/api/phone-llm/debug') {
+      return json({
+        hasBaseUrl: !!env.PHONE_LLM_BASE_URL,
+        baseUrlLen: env.PHONE_LLM_BASE_URL ? env.PHONE_LLM_BASE_URL.length : 0,
+        hasApiKey: !!env.PHONE_LLM_API_KEY,
+        apiKeyLen: env.PHONE_LLM_API_KEY ? env.PHONE_LLM_API_KEY.length : 0,
+        hasModel: !!env.PHONE_LLM_MODEL,
+        envKeys: Object.keys(env).sort()
+      });
+    }
     return env.ASSETS.fetch(request);
   }
 };
