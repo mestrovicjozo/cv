@@ -48,6 +48,7 @@
           >
             <span class="arrow" aria-hidden="true">→</span><span class="title">ActuallyFreeApi</span>
           </a>
+          <button type="button" class="project-close" aria-label="Close preview">✕</button>
           <figure class="preview" data-preview="actuallyfreeapi" aria-hidden="true">
             <a
               href="https://actually-free-api.vercel.app"
@@ -71,6 +72,7 @@
           >
             <span class="arrow" aria-hidden="true">→</span><span class="title">Jarviz</span>
           </a>
+          <button type="button" class="project-close" aria-label="Close preview">✕</button>
           <figure class="preview preview--chat" data-preview="jarviz" id="jarviz" role="dialog" aria-label="Chat with Jarviz">
             <div class="phone">
               <span class="phone-notch" aria-hidden="true"></span>
@@ -127,6 +129,7 @@
           >
             <span class="arrow" aria-hidden="true">→</span><span class="title">DailyAIRadar</span>
           </a>
+          <button type="button" class="project-close" aria-label="Close preview">✕</button>
           <figure class="preview preview--card" data-preview="radar" aria-hidden="true">
             <a href="/radar" class="preview-link" aria-label="Open Daily AI Radar">
               <div class="news-card">
@@ -206,6 +209,15 @@
           const inp = findPreview(p.dataset.project)?.querySelector('input[type="text"]');
           if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 120);
         }
+      });
+    });
+
+    document.querySelectorAll('.project-close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        pinned = null;
+        deactivate();
       });
     });
 
