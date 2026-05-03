@@ -58,6 +58,12 @@
   const digestCache = new Map();
   let renderToken = 0;
 
+  const PAGE_SIZE = 6;
+  let categoryArticles = [];
+  let categoryDateIdx = 0;
+  let categoryPage = 0;
+  let categoryHasMore = true;
+
   const escapeHtml = (s) =>
     s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -188,29 +194,48 @@
     mainEl.innerHTML = html.join('');
   };
 
-  const renderCategory = async () => {
-    const token = ++renderToken;
-    mainEl.innerHTML = '<p class="news-status">Loading…</p>';
+  const resetCategoryState = () => {
+    categoryArticles = [];
+    categoryDateIdx = Math.max(0, allDates.indexOf(currentDate));
+    if (categoryDateIdx === -1) categoryDateIdx = 0;
+    categoryPage = 0;
+    categoryHasMore = true;
+  };
 
-    const startIdx = Math.max(0, allDates.indexOf(currentDate));
-    const collected = [];
-    for (let i = startIdx; i < allDates.length && collected.length < 9; i++) {
+  const ensureCategoryUpTo = async (targetCount, token) => {
+    while (categoryArticles.length < targetCount && categoryDateIdx < allDates.length) {
       try {
-        const p = await fetchDigest(allDates[i]);
+        const p = await fetchDigest(allDates[categoryDateIdx]);
         if (token !== renderToken) return;
         for (const art of p.articles) {
-          if (art.category === currentCategory) {
-            collected.push(art);
-            if (collected.length >= 9) break;
-          }
+          if (art.category === currentCategory) categoryArticles.push(art);
         }
       } catch {
         // skip a missing/broken digest and keep walking
       }
+      categoryDateIdx++;
     }
+  };
+
+  const renderCategory = async () => {
+    const token = ++renderToken;
+    mainEl.innerHTML = '<p class="news-status">Loading…</p>';
+
+    const need = (categoryPage + 1) * PAGE_SIZE + 1;
+    await ensureCategoryUpTo(need, token);
     if (token !== renderToken) return;
 
-    if (!collected.length) {
+    const start = categoryPage * PAGE_SIZE;
+    const slice = categoryArticles.slice(start, start + PAGE_SIZE);
+    categoryHasMore = categoryArticles.length > start + PAGE_SIZE
+      || categoryDateIdx < allDates.length;
+
+    if (!slice.length) {
+      if (categoryPage > 0) {
+        categoryPage = Math.max(0, categoryPage - 1);
+        renderCategory();
+        return;
+      }
       mainEl.innerHTML = `<p class="news-status">No ${escapeHtml(currentCategory)} articles found.</p>`;
       return;
     }
@@ -219,8 +244,13 @@
       <section class="news-section">
         <h2 class="news-section__title">${escapeHtml(currentCategory)}</h2>
         <div class="news-grid news-grid--top">
-          ${collected.map(renderCard).join('')}
+          ${slice.map(renderCard).join('')}
         </div>
+        <nav class="news-pager" aria-label="Pagination">
+          <button type="button" class="news-pager__btn" data-dir="prev"${categoryPage === 0 ? ' disabled' : ''}>← Newer</button>
+          <span class="news-pager__info">Page ${categoryPage + 1}</span>
+          <button type="button" class="news-pager__btn" data-dir="next"${categoryHasMore ? '' : ' disabled'}>Older →</button>
+        </nav>
       </section>
     `;
   };
@@ -248,6 +278,7 @@
         history.replaceState(null, '', newUrl);
       }
 
+      resetCategoryState();
       renderArticles();
       window.scrollTo({ top: 0, behavior: 'instant' });
     } catch (err) {
@@ -259,9 +290,21 @@
   tabsEl.addEventListener('click', (e) => {
     const btn = e.target.closest('.news-tab');
     if (!btn) return;
+    if (btn.dataset.cat === currentCategory) return;
     currentCategory = btn.dataset.cat;
     tabsEl.querySelectorAll('.news-tab').forEach(b => b.classList.toggle('is-active', b === btn));
+    resetCategoryState();
     renderArticles();
+  });
+
+  // Pager clicks → flip pages within current category
+  mainEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.news-pager__btn');
+    if (!btn || btn.disabled) return;
+    if (btn.dataset.dir === 'next') categoryPage++;
+    else if (btn.dataset.dir === 'prev') categoryPage = Math.max(0, categoryPage - 1);
+    renderCategory();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // Date input → load that day
