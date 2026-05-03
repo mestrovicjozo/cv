@@ -55,6 +55,8 @@
   let currentArticles = [];
   let currentIntro = '';
   let currentCategory = 'all';
+  const digestCache = new Map();
+  let renderToken = 0;
 
   const escapeHtml = (s) =>
     s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -63,6 +65,13 @@
     try {
       return new Date(d + 'T00:00:00Z').toLocaleDateString(undefined,
         { month: 'long', day: 'numeric', year: 'numeric' });
+    } catch { return d; }
+  };
+
+  const fmtDateShort = (d) => {
+    try {
+      return new Date(d + 'T00:00:00Z').toLocaleDateString(undefined,
+        { month: 'short', day: 'numeric' });
     } catch { return d; }
   };
 
@@ -127,8 +136,10 @@
     const safeSrc = escapeHtml(art.source);
     const safeSummary = escapeHtml(art.summary).replace(/\n+/g, '<br />');
     const safeWhy = escapeHtml(art.whyItMatters);
+    const safeDate = art.date ? escapeHtml(fmtDateShort(art.date)) : '';
     return `
       <article class="news-card">
+        ${safeDate ? `<span class="news-card__date">${safeDate}</span>` : ''}
         <p class="news-card__cat">${safeCat}</p>
         <h3 class="news-card__title">
           <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>
@@ -140,26 +151,26 @@
     `;
   };
 
-  const renderArticles = () => {
-    if (!currentArticles.length) {
-      mainEl.innerHTML = '<p class="news-status">No articles for this date.</p>';
-      return;
-    }
+  const fetchDigest = async (date) => {
+    if (digestCache.has(date)) return digestCache.get(date);
+    const res = await fetch(`/api/radar/digest/${encodeURIComponent(date)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    const parsed = parseDigest(data.content || '');
+    parsed.articles.forEach(a => { a.date = date; });
+    digestCache.set(date, parsed);
+    return parsed;
+  };
 
-    const filtered = currentCategory === 'all'
-      ? currentArticles
-      : currentArticles.filter(a => a.category === currentCategory);
-
-    const sections = ['Top Stories', 'Honorable Mentions'];
+  const renderLatest = () => {
     const html = [];
-
-    if (currentIntro && currentCategory === 'all') {
+    if (currentIntro) {
       html.push(`<p class="news-intro">${escapeHtml(currentIntro)}</p>`);
     }
-
+    const sections = ['Top Stories', 'Honorable Mentions'];
     let renderedAny = false;
     for (const sec of sections) {
-      const items = filtered.filter(a => a.section === sec);
+      const items = currentArticles.filter(a => a.section === sec);
       if (!items.length) continue;
       renderedAny = true;
       html.push(`
@@ -171,22 +182,61 @@
         </section>
       `);
     }
-
     if (!renderedAny) {
-      html.push(`<p class="news-status">No ${escapeHtml(currentCategory)} articles in this issue.</p>`);
+      html.push('<p class="news-status">No articles for this date.</p>');
+    }
+    mainEl.innerHTML = html.join('');
+  };
+
+  const renderCategory = async () => {
+    const token = ++renderToken;
+    mainEl.innerHTML = '<p class="news-status">Loading…</p>';
+
+    const startIdx = Math.max(0, allDates.indexOf(currentDate));
+    const collected = [];
+    for (let i = startIdx; i < allDates.length && collected.length < 9; i++) {
+      try {
+        const p = await fetchDigest(allDates[i]);
+        if (token !== renderToken) return;
+        for (const art of p.articles) {
+          if (art.category === currentCategory) {
+            collected.push(art);
+            if (collected.length >= 9) break;
+          }
+        }
+      } catch {
+        // skip a missing/broken digest and keep walking
+      }
+    }
+    if (token !== renderToken) return;
+
+    if (!collected.length) {
+      mainEl.innerHTML = `<p class="news-status">No ${escapeHtml(currentCategory)} articles found.</p>`;
+      return;
     }
 
-    mainEl.innerHTML = html.join('');
+    mainEl.innerHTML = `
+      <section class="news-section">
+        <h2 class="news-section__title">${escapeHtml(currentCategory)}</h2>
+        <div class="news-grid news-grid--top">
+          ${collected.map(renderCard).join('')}
+        </div>
+      </section>
+    `;
+  };
+
+  const renderArticles = () => {
+    if (currentCategory === 'all') {
+      renderLatest();
+    } else {
+      renderCategory();
+    }
   };
 
   const loadDigest = async (date) => {
     mainEl.innerHTML = '<p class="news-status">Loading…</p>';
     try {
-      const res = await fetch(`/api/radar/digest/${encodeURIComponent(date)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-
-      const parsed = parseDigest(data.content || '');
+      const parsed = await fetchDigest(date);
       currentDate = date;
       currentArticles = parsed.articles;
       currentIntro = parsed.intro;
